@@ -67,10 +67,10 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
         productData = self._get_product_info(str(request.productIdentifier))
 
         if productData:
-            new_quantity = productData['productQuantity'] + request.productQuantity
-            self._set_product_info(str(request.productIdentifier), productData['productName'], new_quantity, productData['productPrice'])
+            newQuantity = productData['productQuantity'] + request.productQuantity
+            self._set_product_info(str(request.productIdentifier), productData['productName'], newQuantity, productData['productPrice'])
             return inventory_pb2.Product(
-                 productQuantity = new_quantity,
+                 productQuantity = newQuantity,
                 productIdentifier = request.productIdentifier,
                 productName = productData['productName'],
                 productPrice = productData['productPrice'],

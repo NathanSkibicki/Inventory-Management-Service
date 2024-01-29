@@ -6,9 +6,9 @@ import inventory_pb2_grpc
 def AddProduct(stub):
     product = inventory_pb2.Product(
         productIdentifier = 1,
-        product_name = "2",
-        product_quantity = 3,
-        product_price = 4.0
+        productName = "2",
+        productQuantity = 3,
+        productPrice = 4.0
     )
 
 def GetAllProducts(stub):
@@ -22,7 +22,7 @@ def UpdateProductQuantity(stub, productID, quantity):
 
     request = inventory_pb2.Quantity(
         productIdentifier = productID,
-        product_quantity = quantity
+        productQuantity = quantity
     )
 
     response = stub.UpdateProductQuantity(request)
@@ -50,7 +50,7 @@ def run():
     channel = grpc.insecure_channel('localhost:50051')
     stub = inventory_pb2_grpc.InventoryServiceStub(channel)
 
-    response = stub.AddProduct(inventory_pb2.Product(productIdentifier=1, product_name="Example", product_quantity=10, product_price=20.0))
+    response = stub.AddProduct(inventory_pb2.Product(productIdentifier=1, productName="Example", productQuantity=10, productPrice=20.0))
     print("AddProduct:", response.status)
 
 if __name__ == '__main__':
