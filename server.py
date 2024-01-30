@@ -7,8 +7,10 @@ import threading
 
 class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
 
+    #redis setup
     def __init__(self):
         self.redis_client = redis.StrictRedis(host = 'localhost', port=6379, db= 0, decode_responses=True)
+        self.lock = threading.Lock()
 
     #gets product information
     def _get_product_info(self, productIdentifier):
@@ -44,9 +46,9 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
         return inventory_pb2.Status(status="Product Added")
     
     #Get ProductbyId
-    def GetProductById(self, productIdentifier):
+    def GetProductById(self,request, productIdentifier):
 
-        productIdentifier = str(request.productIdentifier)
+        productIdentifier = request.productIdentifier
         #get product via Identifier
         productData = self._get_product_info(productIdentifier)
 
@@ -58,8 +60,9 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
                 productPrice = productData['productPrice']
             )
         else:
-            context.set_code(grpc.StatusCode.NOT_FOUND)
+            
             context.set_details('Product not found')
+            context.set_code(grpc.StatusCode.NOT_FOUND)
             return inventory_pb2.Product()
     
     #Update Products
@@ -67,18 +70,20 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
         productData = self._get_product_info(str(request.productIdentifier))
 
         if productData:
+
             newQuantity = productData['productQuantity'] + request.productQuantity
+            #set new quantity info
             self._set_product_info(str(request.productIdentifier), productData['productName'], newQuantity, productData['productPrice'])
             return inventory_pb2.Product(
-                 productQuantity = newQuantity,
                 productIdentifier = request.productIdentifier,
-                productName = productData['productName'],
+                productQuantity = newQuantity,
                 productPrice = productData['productPrice'],
-            )
-        
-        else:
-            context.set_code(grpc.StatusCode.NOT_FOUND)
+                productName = productData['productName'],
+                
+            )    
+        else:         
             context.set_details('Product not found')
+            context.set_code(grpc.StatusCode.NOT_FOUND)
             return inventory_pb2.Product()
     
     #Gets and lists all products
@@ -87,6 +92,7 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
             product_keys = self.redis_client.keys('*')
             for key in product_keys:
                 productData = self._get_product_info(key.decode())
+
                 yield inventory_pb2.Product(
                     productIdentifier=int(key),
                     productName=productData['productName'],
@@ -99,9 +105,9 @@ class InventoryService(inventory_pb2_grpc.InventoryServiceServicer):
         with self.lock:
             result = self.redis_client.delete(request.productIdentifier)
             #if result exists
-            if result != 1:
-                context.set_code(grpc.StatusCode.NOT_FOUND)
+            if result != 1:       
                 context.set_details('Product Does not exist')
+                context.set_code(grpc.StatusCode.NOT_FOUND)
                 return inventory_pb2.Status()
             else:
                 return inventory_pb2.Status(status="Product deleted")

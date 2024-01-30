@@ -13,9 +13,11 @@ def AddProduct(stub):
 
 def GetAllProducts(stub):
     response_iterator = stub.GetAllProducts(inventory_pb2.Empty())
-    for product in response_iterator:
-        print("Product:", product)
-    response = stub.AddProduct(product)
+    for i in response_iterator:
+        print("Product:", i)
+
+    response = stub.AddProduct(i)
+
     print("AddProduct response:", response.status)
 
 def UpdateProductQuantity(stub, productID, quantity):
